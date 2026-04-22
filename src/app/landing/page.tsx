@@ -182,7 +182,7 @@ export default function LandingPage() {
 
         {[
           { nome: '💎 Pulseira com pedras prata 925', preco: 150, foto: 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=400&q=80' },
-          { nome: '🌸 Conjunto pérola — colar + brinco + anel', preco: 300, foto: 'https://images.unsplash.com/photo-1599459183200-59c7687a0c70?w=400&q=80' },
+          { nome: '🌸 Conjunto pérola — colar + brinco + anel', preco: 300, foto: 'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=400&q=80' },
         ].map(p => (
           <div key={p.nome} style={{ background: 'white', border: '1.5px solid #F4C0D1', borderRadius: 16, overflow: 'hidden', marginBottom: 12 }}>
             <img src={p.foto} alt="" style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }}/>

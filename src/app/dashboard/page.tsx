@@ -88,14 +88,14 @@ export default function DashboardPage() {
 
       {/* HEADER */}
       <header style={{ background: 'white', borderBottom: '1px solid var(--rosa-border)', padding: '0 20px', height: 58, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div>
-          <div style={{ fontFamily: 'Montserrat', fontSize: 14, fontWeight: 800, color: 'var(--texto)', lineHeight: 1 }}>
-            Prata <span style={{ color: 'var(--rosa)' }}>15</span>
-          </div>
-          <div style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--cinza)' }}>
-            Revendedora
-          </div>
-        </div>
+       <div>
+  <div style={{ fontFamily: 'Montserrat', fontSize: 15, fontWeight: 800, color: 'var(--texto)', lineHeight: 1.1 }}>
+    {revendedora?.nome_loja || `Olá, ${revendedora?.nome?.split(' ')[0]}`}
+  </div>
+  <div style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--cinza)', marginTop: 3 }}>
+    Minha loja 925
+  </div>
+</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ position: 'relative', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--off)', borderRadius: '50%', border: '1px solid var(--cinza-light)', cursor: 'pointer' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#777" strokeWidth="2" strokeLinecap="round">

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient, type Revendedora } from '@/lib/supabase'
 import BottomNav from '@/components/dashboard/BottomNav'
+import Logo925 from '@/components/ui/Logo925'
 
 export default function LojaPage() {
   const router = useRouter()
@@ -12,7 +13,7 @@ export default function LojaPage() {
   const [salvo, setSalvo] = useState(false)
   const [linkCopiado, setLinkCopiado] = useState(false)
 
-  const [form, setForm] = useState({ bio: '', whatsapp: '', cidade: '', estado: '' })
+ const [form, setForm] = useState({ nome_loja: '', bio: '', whatsapp: '', cidade: '', estado: '' })
 
   useEffect(() => {
     async function load() {
@@ -23,7 +24,7 @@ export default function LojaPage() {
       const { data: rev } = await supabase.from('revendedoras').select('*').eq('user_id', user.id).single()
       if (!rev) return
       setRevendedora(rev)
-      setForm({ bio: rev.bio || '', whatsapp: rev.whatsapp || '', cidade: rev.cidade || '', estado: rev.estado || '' })
+      setForm({ nome_loja: rev.nome_loja || '', bio: rev.bio || '', whatsapp: rev.whatsapp || '', cidade: rev.cidade || '', estado: rev.estado || '' })
       setLoading(false)
     }
     load()
@@ -34,6 +35,7 @@ export default function LojaPage() {
     setSalvando(true)
     const supabase = createClient()
     await supabase.from('revendedoras').update({
+      nome_loja: form.nome_loja,
       bio: form.bio, whatsapp: form.whatsapp,
       cidade: form.cidade, estado: form.estado,
       atualizado_em: new Date().toISOString(),
@@ -44,13 +46,13 @@ export default function LojaPage() {
   }
 
   function copiarLink() {
-    navigator.clipboard.writeText(`https://${revendedora?.subdominio}.prata15.com.br`)
+    navigator.clipboard.writeText(`https://${revendedora?.subdominio}.lojadeprata925.com.br`)
     setLinkCopiado(true)
     setTimeout(() => setLinkCopiado(false), 2000)
   }
 
   function compartilharWhatsApp() {
-    const link = `https://${revendedora?.subdominio}.prata15.com.br`
+    const link = `https://${revendedora?.subdominio}.lojadeprata925.com.br`
     const texto = `✨ Confere minha loja de prata 925! Temos mais de 3.000 peças com qualidade garantida 💎\n\n${link}`
     window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`)
   }
@@ -61,17 +63,20 @@ export default function LojaPage() {
     </div>
   )
 
-  const link = `${revendedora?.subdominio}.prata15.com.br`
+  const link = `${revendedora?.subdominio}.lojadeprata925.com.br`
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--off)', paddingBottom: 90 }}>
 
       <header style={{ background: 'white', borderBottom: '1px solid var(--rosa-border)', padding: '0 20px', height: 58, display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 100 }}>
-        <button onClick={() => router.push('/dashboard')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cinza)', display: 'flex', alignItems: 'center' }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-        </button>
-        <div style={{ fontFamily: 'Montserrat', fontSize: 16, fontWeight: 800, color: 'var(--texto)' }}>Minha loja</div>
-      </header>
+  <button onClick={() => router.push('/dashboard')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cinza)', display: 'flex', alignItems: 'center' }}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+  </button>
+  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+    <Logo925 variant="favicon" width={32} height={32} />
+    <div style={{ fontFamily: 'Montserrat', fontSize: 16, fontWeight: 800, color: 'var(--texto)' }}>Minha loja</div>
+  </div>
+</header>
 
       {/* Preview da loja */}
       <div style={{ background: 'var(--rosa)', padding: '24px 20px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
@@ -137,6 +142,7 @@ export default function LojaPage() {
           </div>
           <form onSubmit={salvarPerfil}>
             {[
+              { label: 'Nome da sua loja', field: 'nome_loja', type: 'text', placeholder: 'Ex: Joias da Maria' },
               { label: 'WhatsApp', field: 'whatsapp', type: 'tel', placeholder: '(11) 99999-9999' },
               { label: 'Cidade', field: 'cidade', type: 'text', placeholder: 'São Paulo' },
               { label: 'Estado', field: 'estado', type: 'text', placeholder: 'SP' },

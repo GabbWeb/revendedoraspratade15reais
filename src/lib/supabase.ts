@@ -11,6 +11,7 @@ export type Revendedora = {
   id: string
   user_id: string
   nome: string
+  nome_loja: string | null
   email: string
   whatsapp: string
   cidade: string
