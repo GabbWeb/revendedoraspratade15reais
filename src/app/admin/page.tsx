@@ -16,18 +16,15 @@ export default function AdminHomePage() {
     async function load() {
       const supabase = createClient()
       
-      // Total de revendedoras
       const { count: total } = await supabase
         .from('revendedoras')
         .select('*', { count: 'exact', head: true })
 
-      // Revendedoras ativas
       const { count: ativas } = await supabase
         .from('revendedoras')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'ativa')
 
-      // Vendas do mês
       const inicioMes = new Date()
       inicioMes.setDate(1)
       inicioMes.setHours(0, 0, 0, 0)
@@ -40,7 +37,6 @@ export default function AdminHomePage() {
 
       const receita = vendasMes?.reduce((acc, v) => acc + Number(v.valor_total), 0) || 0
 
-      // Saldo pendente (total a pagar a revendedoras)
       const { data: saldos } = await supabase
         .from('revendedoras')
         .select('saldo_disponivel')
@@ -73,7 +69,6 @@ export default function AdminHomePage() {
 
   return (
     <div style={{ padding: '24px 32px', maxWidth: 1200, margin: '0 auto' }}>
-      {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <div style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: '#E8396A', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 4 }}>
           Prata de 15 Reais · Backoffice
@@ -83,7 +78,6 @@ export default function AdminHomePage() {
         </div>
       </div>
 
-      {/* Métricas principales */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 32 }}>
         {[
           { label: 'Revendedoras totais', val: stats.totalRevendedoras.toString(), icon: '👯‍♀️' },
@@ -102,7 +96,6 @@ export default function AdminHomePage() {
         ))}
       </div>
 
-      {/* Accesos rápidos */}
       <div style={{ fontFamily: 'Montserrat', fontSize: 14, fontWeight: 700, color: '#1A1A1A', marginBottom: 12 }}>
         Gerenciar
       </div>
@@ -113,7 +106,7 @@ export default function AdminHomePage() {
           { label: 'Saldos', href: '/admin/saldos', desc: 'Pagamentos e comissões' },
           { label: 'Mensalidades', href: '/admin/mensalidades', desc: 'Status de pagamento' },
         ].map((link, i) => (
-          <a key={i} href={link.href} style={{ background: 'white', padding: 20, borderRadius: 12, border: '1px solid #f0f0f0', textDecoration: 'none', color: '#1A1A1A', display: 'block', transition: 'border-color .2s' }}>
+          <a key={i} href={link.href} style={{ background: 'white', padding: 20, borderRadius: 12, border: '1px solid #f0f0f0', textDecoration: 'none', color: '#1A1A1A', display: 'block' }}>
             <div style={{ fontFamily: 'Montserrat', fontSize: 15, fontWeight: 700, marginBottom: 4 }}>
               {link.label} →
             </div>
