@@ -42,7 +42,7 @@ export default function VendasPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--off)', paddingBottom: 90 }}>
+    <div className="revendedora-app" style={{ minHeight: '100vh', background: 'var(--off)', paddingBottom: 90 }}>
 
       <header style={{ background: 'white', borderBottom: '1px solid var(--rosa-border)', padding: '0 20px', height: 58, display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 100 }}>
         <button onClick={() => router.push('/dashboard')} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--cinza)' }}>

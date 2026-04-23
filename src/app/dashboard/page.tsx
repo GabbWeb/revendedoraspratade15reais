@@ -70,7 +70,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--off)' }}>
+      <div className="revendedora-app" style={{ minHeight: '100vh', background: 'var(--off)', paddingBottom: 90 }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid var(--rosa-border)', borderTopColor: 'var(--rosa)', animation: 'spin 1s linear infinite', margin: '0 auto 12px' }}/>
           <div style={{ fontSize: 13, color: 'var(--cinza)' }}>Carregando sua loja...</div>
@@ -84,7 +84,7 @@ export default function DashboardPage() {
   const comissaoMes = vendasMes.reduce((acc, v) => acc + v.valor_comissao, 0)
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--off)', paddingBottom: 90 }}>
+    <div className="revendedora-app" style={{ minHeight: '100vh', background: 'var(--off)', paddingBottom: 90 }}>
 
       {/* HEADER */}
       <header style={{ background: 'white', borderBottom: '1px solid var(--rosa-border)', padding: '0 20px', height: 58, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>

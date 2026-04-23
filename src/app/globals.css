@@ -25,9 +25,15 @@ body {
   font-family: 'Poppins', sans-serif;
   background: var(--off);
   color: var(--texto);
+  min-height: 100vh;
+}
+
+/* Wrapper SOLO para el dashboard de revendedora (mobile-first) */
+.revendedora-app {
   max-width: 430px;
   margin: 0 auto;
   min-height: 100vh;
+  background: var(--off);
 }
 
 /* Botão padrão rosa */
