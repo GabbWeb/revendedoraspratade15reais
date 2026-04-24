@@ -53,7 +53,7 @@ export default function DashboardPage() {
 
   function copiarLink() {
     if (!revendedora) return
-    navigator.clipboard.writeText(`https://${revendedora.subdominio}.prata15.com.br`)
+    navigator.clipboard.writeText(`https://${revendedora.subdominio}.lojadeprata925.com.br`)
     setLinkCopiado(true)
     setTimeout(() => setLinkCopiado(false), 2000)
   }
@@ -70,7 +70,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="revendedora-app" style={{ minHeight: '100vh', background: 'var(--off)', paddingBottom: 90 }}>
+      <div className="revendedora-app" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--off)' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid var(--rosa-border)', borderTopColor: 'var(--rosa)', animation: 'spin 1s linear infinite', margin: '0 auto 12px' }}/>
           <div style={{ fontSize: 13, color: 'var(--cinza)' }}>Carregando sua loja...</div>
@@ -86,16 +86,37 @@ export default function DashboardPage() {
   return (
     <div className="revendedora-app" style={{ minHeight: '100vh', background: 'var(--off)', paddingBottom: 90 }}>
 
-      {/* HEADER */}
+      {revendedora?.status === 'pendente' && (
+        <div style={{ background: '#FFFBEB', borderBottom: '1px solid #FCD34D', padding: '14px 20px', position: 'sticky', top: 0, zIndex: 200 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+            <div style={{ fontSize: 18 }}>⚠️</div>
+            <div style={{ fontFamily: 'Montserrat', fontSize: 13, fontWeight: 800, color: '#92400E' }}>
+              Conta aguardando ativação
+            </div>
+          </div>
+          <div style={{ fontSize: 12, color: '#78350F', lineHeight: 1.5, marginBottom: 10 }}>
+            Para começar a vender, faça o pagamento de R$ 39,99. Assim que confirmarmos, sua loja fica ativa em poucos minutos ✨
+          </div>
+          <a
+            href="https://pag.ae/81JjyJNps"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: 'inline-block', background: '#D97706', color: 'white', fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, padding: '8px 14px', borderRadius: 8, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.3px' }}
+          >
+            💳 Pagar agora
+          </a>
+        </div>
+      )}
+
       <header style={{ background: 'white', borderBottom: '1px solid var(--rosa-border)', padding: '0 20px', height: 58, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
-       <div>
-  <div style={{ fontFamily: 'Montserrat', fontSize: 15, fontWeight: 800, color: 'var(--texto)', lineHeight: 1.1 }}>
-    {revendedora?.nome_loja || `Olá, ${revendedora?.nome?.split(' ')[0]}`}
-  </div>
-  <div style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--cinza)', marginTop: 3 }}>
-    Minha loja 925
-  </div>
-</div>
+        <div>
+          <div style={{ fontFamily: 'Montserrat', fontSize: 15, fontWeight: 800, color: 'var(--texto)', lineHeight: 1.1 }}>
+            {revendedora?.nome_loja || `Olá, ${revendedora?.nome?.split(' ')[0]}`}
+          </div>
+          <div style={{ fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--cinza)', marginTop: 3 }}>
+            Minha loja 925
+          </div>
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ position: 'relative', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--off)', borderRadius: '50%', border: '1px solid var(--cinza-light)', cursor: 'pointer' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#777" strokeWidth="2" strokeLinecap="round">
@@ -111,7 +132,6 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* BOAS VINDAS */}
       <div style={{ background: 'var(--rosa)', padding: '20px 20px 32px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle,rgba(255,255,255,.08) 1.5px,transparent 1.5px)', backgroundSize: '20px 20px', pointerEvents: 'none' }}/>
         <div style={{ fontSize: 13, color: 'rgba(255,255,255,.8)', marginBottom: 3, position: 'relative' }}>Olá, bem-vinda de volta 👋</div>
@@ -119,15 +139,14 @@ export default function DashboardPage() {
           {revendedora?.nome?.split(' ')[0]}
         </div>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,.15)', borderRadius: 20, padding: '4px 12px', fontSize: 11, color: 'rgba(255,255,255,.9)', fontWeight: 500, position: 'relative' }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#5DD9C1' }}/>
-          Revendedora ativa
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: revendedora?.status === 'ativa' ? '#5DD9C1' : '#FCD34D' }}/>
+          {revendedora?.status === 'ativa' ? 'Revendedora ativa' : 'Pendente de ativação'}
         </div>
       </div>
 
-      {/* SALDO CARD */}
       <div style={{ margin: '-16px 16px 0', position: 'relative', zIndex: 10 }}>
         <div className="card fade-up" style={{ padding: 20, boxShadow: '0 4px 20px rgba(232,57,106,.1)' }}>
-          <div style={{ fontSize: 11, color: 'var(--cinza)', textTransform: 'uppercase', letterSpacing: .5, marginBottom: 6, fontWeight: 600 }}>
+          <div style={{ fontSize: 11, color: 'var(--cinza)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6, fontWeight: 600 }}>
             Saldo disponível para saque
           </div>
           <div style={{ fontFamily: 'Montserrat', fontSize: 38, fontWeight: 900, color: 'var(--texto)', lineHeight: 1, letterSpacing: -2, marginBottom: 4 }}>
@@ -152,17 +171,16 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* MÉTRICAS */}
       <div style={{ padding: '20px 16px 0' }}>
-        <div style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: 'var(--cinza)', textTransform: 'uppercase', letterSpacing: .5, marginBottom: 12 }}>
+        <div style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: 'var(--cinza)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 12 }}>
           Resumo — {mesAtual}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {[
-            { icon: '🛍️', val: vendasMes.length.toString(), label: 'Vendas no mês', cor: 'var(--teal-pale)', icoCor: '#089C82' },
-            { icon: '💰', val: formatBRL(comissaoMes), label: 'Comissão no mês', cor: 'var(--rosa-pale)', icoCor: 'var(--rosa)' },
-            { icon: '📦', val: revendedora?.total_vendas?.toString() || '0', label: 'Total de vendas', cor: 'var(--teal-pale)', icoCor: '#089C82' },
-            { icon: '💸', val: formatBRL(revendedora?.total_ganho || 0), label: 'Total ganho', cor: 'var(--rosa-pale)', icoCor: 'var(--rosa)' },
+            { icon: '🛍️', val: vendasMes.length.toString(), label: 'Vendas no mês', cor: 'var(--teal-pale)' },
+            { icon: '💰', val: formatBRL(comissaoMes), label: 'Comissão no mês', cor: 'var(--rosa-pale)' },
+            { icon: '📦', val: revendedora?.total_vendas?.toString() || '0', label: 'Total de vendas', cor: 'var(--teal-pale)' },
+            { icon: '💸', val: formatBRL(revendedora?.total_ganho || 0), label: 'Total ganho', cor: 'var(--rosa-pale)' },
           ].map((m, i) => (
             <div key={i} className="card">
               <div style={{ width: 36, height: 36, borderRadius: 10, background: m.cor, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10, fontSize: 18 }}>
@@ -175,7 +193,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* MINHA LOJA */}
       <div style={{ padding: '16px 16px 0' }}>
         <div className="card">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
@@ -192,14 +209,14 @@ export default function DashboardPage() {
           </div>
           <div style={{ background: 'var(--off)', border: '1px solid var(--cinza-light)', borderRadius: 10, padding: '11px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
             <div style={{ fontSize: 12, color: 'var(--teal-dark)', fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {revendedora?.subdominio}.prata15.com.br
+              {revendedora?.subdominio}.lojadeprata925.com.br
             </div>
             <button onClick={copiarLink} style={{ background: linkCopiado ? 'var(--teal)' : 'var(--teal-pale)', color: linkCopiado ? 'white' : 'var(--teal-dark)', border: '1px solid var(--teal-border)', borderRadius: 8, padding: '6px 12px', fontSize: 11, fontWeight: 700, fontFamily: 'Montserrat', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all .2s' }}>
               {linkCopiado ? '✓ Copiado!' : 'Copiar link'}
             </button>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => window.open(`https://${revendedora?.subdominio}.prata15.com.br`, '_blank')} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: 10, borderRadius: 10, fontSize: 12, fontWeight: 600, fontFamily: 'Montserrat', cursor: 'pointer', border: 'none', background: 'var(--rosa)', color: 'white' }}>
+            <button onClick={() => window.open(`https://${revendedora?.subdominio}.lojadeprata925.com.br`, '_blank')} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: 10, borderRadius: 10, fontSize: 12, fontWeight: 600, fontFamily: 'Montserrat', cursor: 'pointer', border: 'none', background: 'var(--rosa)', color: 'white' }}>
               👁️ Ver minha loja
             </button>
             <button onClick={copiarLink} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: 10, borderRadius: 10, fontSize: 12, fontWeight: 600, fontFamily: 'Montserrat', cursor: 'pointer', background: 'var(--rosa-pale)', color: 'var(--rosa)', border: '1.5px solid var(--rosa-border)' }}>
@@ -209,10 +226,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ÚLTIMAS VENDAS */}
       <div style={{ padding: '16px 16px 0' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: 'var(--cinza)', textTransform: 'uppercase', letterSpacing: .5 }}>
+          <div style={{ fontFamily: 'Montserrat', fontSize: 12, fontWeight: 700, color: 'var(--cinza)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Últimas vendas
           </div>
           <button onClick={() => router.push('/vendas')} style={{ fontSize: 12, color: 'var(--rosa)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>
@@ -247,7 +263,7 @@ export default function DashboardPage() {
                 <div style={{ fontFamily: 'Montserrat', fontSize: 15, fontWeight: 800, color: 'var(--teal-dark)' }}>
                   +{formatBRL(venda.valor_comissao)}
                 </div>
-                <div style={{ display: 'inline-block', fontSize: 9, fontWeight: 700, fontFamily: 'Montserrat', letterSpacing: .3, padding: '3px 8px', borderRadius: 20, marginTop: 3, textTransform: 'uppercase', background: cor.bg, color: cor.color }}>
+                <div style={{ display: 'inline-block', fontSize: 9, fontWeight: 700, fontFamily: 'Montserrat', letterSpacing: '0.3px', padding: '3px 8px', borderRadius: 20, marginTop: 3, textTransform: 'uppercase', background: cor.bg, color: cor.color }}>
                   {venda.status}
                 </div>
               </div>
@@ -256,7 +272,6 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* MODAL SAQUE */}
       {modalSaque && (
         <ModalSaque
           saldoDisponivel={revendedora?.saldo_disponivel || 0}
