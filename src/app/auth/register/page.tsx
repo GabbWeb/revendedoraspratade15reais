@@ -4,11 +4,14 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
 
+const LINK_PAGAMENTO = 'https://pag.ae/81JjyJNps'
+
 export default function RegisterPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
+  const [cadastroOk, setCadastroOk] = useState(false)
 
   const [form, setForm] = useState({
     nome: '', email: '', whatsapp: '', cidade: '',
@@ -35,7 +38,6 @@ export default function RegisterPage() {
     setLoading(true)
     const supabase = createClient()
 
-    // 1. Cria usuário no Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: form.email,
       password: form.senha,
@@ -47,14 +49,12 @@ export default function RegisterPage() {
       return
     }
 
-    // 2. Gera subdomínio único
     const subdominio = form.nome
       .toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]/g, '')
       .slice(0, 20)
 
-    // 3. Cria perfil da revendedora
     const { error: profileError } = await supabase
       .from('revendedoras')
       .insert({
@@ -75,13 +75,73 @@ export default function RegisterPage() {
       return
     }
 
-    router.push('/dashboard?novo=true')
+    setCadastroOk(true)
+    setLoading(false)
+  }
+
+  // TELA DE PAGAMENTO (após cadastro exitoso)
+  if (cadastroOk) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--rosa-pale)', padding: '40px 20px' }}>
+        <div className="card fade-up" style={{ maxWidth: 420, margin: '0 auto', padding: '32px 24px', textAlign: 'center' }}>
+          
+          <div style={{ fontSize: 56, marginBottom: 12 }}>🎉</div>
+          
+          <div style={{ fontFamily: 'Montserrat', fontSize: 22, fontWeight: 900, color: 'var(--texto)', marginBottom: 8 }}>
+            Conta criada, {form.nome.split(' ')[0]}!
+          </div>
+          
+          <div style={{ fontSize: 14, color: 'var(--cinza)', marginBottom: 24, lineHeight: 1.5 }}>
+            Só falta um passo para ativar sua loja 💎
+          </div>
+
+          <div style={{ background: 'var(--rosa-pale)', border: '2px dashed var(--rosa-border)', borderRadius: 14, padding: '20px 16px', marginBottom: 20 }}>
+            <div style={{ fontSize: 11, color: 'var(--rosa)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>
+              Taxa de ativação
+            </div>
+            <div style={{ fontFamily: 'Montserrat', fontSize: 36, fontWeight: 900, color: 'var(--rosa)', lineHeight: 1, marginBottom: 4 }}>
+              R$ 39,90
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--cinza)' }}>
+              Pagamento único pela plataforma
+            </div>
+          </div>
+
+          <div style={{ textAlign: 'left', background: 'white', border: '1px solid var(--cinza-light)', borderRadius: 12, padding: 16, marginBottom: 20, fontSize: 13, color: 'var(--texto)', lineHeight: 1.6 }}>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>Como funciona:</div>
+            <div>1️⃣ Clica no botão abaixo e paga via PagBank</div>
+            <div>2️⃣ Aceita PIX, boleto e cartão (até 12x)</div>
+            <div>3️⃣ Em até 24h ativamos sua conta</div>
+            <div>4️⃣ Você recebe notificação e pode começar a vender ✨</div>
+          </div>
+
+          <a 
+            href={LINK_PAGAMENTO} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{ display: 'block', background: 'var(--rosa)', color: 'white', fontFamily: 'Montserrat', fontWeight: 800, fontSize: 15, padding: 16, borderRadius: 14, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: .3, marginBottom: 12 }}
+          >
+            💳 Pagar agora via PagBank
+          </a>
+
+          <button 
+            onClick={() => router.push('/auth/login')}
+            style={{ width: '100%', background: 'none', border: 'none', color: 'var(--cinza)', fontSize: 13, cursor: 'pointer', padding: 10 }}
+          >
+            Já paguei, ir para login →
+          </button>
+
+          <div style={{ marginTop: 16, fontSize: 11, color: 'var(--cinza)', lineHeight: 1.5 }}>
+            Ao pagar você confirma sua conta e concorda com os termos de uso da plataforma OceanIt.
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--rosa-pale)' }}>
 
-      {/* Header */}
       <div style={{ background: 'white', borderBottom: '1px solid var(--rosa-border)', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontFamily: 'Montserrat', fontSize: 16, fontWeight: 900, color: 'var(--texto)' }}>
           Prata <span style={{ color: 'var(--rosa)' }}>15</span>
@@ -91,7 +151,6 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      {/* Progress */}
       <div style={{ height: 4, background: 'var(--rosa-border)' }}>
         <div style={{ height: '100%', background: 'var(--rosa)', width: step === 1 ? '50%' : '100%', transition: 'width .3s' }}/>
       </div>
@@ -156,11 +215,10 @@ export default function RegisterPage() {
 
             {step === 2 && (
               <>
-                {/* Preview do link */}
                 <div style={{ background: 'var(--teal-pale)', border: '1px solid var(--teal-border)', borderRadius: 12, padding: '12px 16px', marginBottom: 20 }}>
                   <div style={{ fontSize: 11, color: 'var(--teal-dark)', fontWeight: 600, marginBottom: 3 }}>Seu link da loja será:</div>
                   <div style={{ fontFamily: 'Montserrat', fontSize: 14, fontWeight: 800, color: 'var(--teal-dark)' }}>
-                    {form.nome.toLowerCase().replace(/\s+/g, '').slice(0, 15)}.prata15.com.br
+                    {form.nome.toLowerCase().replace(/\s+/g, '').slice(0, 15)}.lojadeprata925.com.br
                   </div>
                 </div>
 
