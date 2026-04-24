@@ -100,7 +100,7 @@ export default function RegisterPage() {
               Taxa de ativação
             </div>
             <div style={{ fontFamily: 'Montserrat', fontSize: 36, fontWeight: 900, color: 'var(--rosa)', lineHeight: 1, marginBottom: 4 }}>
-              R$ 39,90
+              R$ 39,99
             </div>
             <div style={{ fontSize: 12, color: 'var(--cinza)' }}>
               Pagamento único pela plataforma
@@ -110,8 +110,8 @@ export default function RegisterPage() {
           <div style={{ textAlign: 'left', background: 'white', border: '1px solid var(--cinza-light)', borderRadius: 12, padding: 16, marginBottom: 20, fontSize: 13, color: 'var(--texto)', lineHeight: 1.6 }}>
             <div style={{ fontWeight: 700, marginBottom: 8 }}>Como funciona:</div>
             <div>1️⃣ Clica no botão abaixo e paga via PagBank</div>
-            <div>2️⃣ Aceita PIX, boleto e cartão (até 12x)</div>
-            <div>3️⃣ Em até 24h ativamos sua conta</div>
+            <div>2️⃣ Aceita PIX, boleto e cartão</div>
+            <div>3️⃣ Em poucos minutos ativamos sua conta</div>
             <div>4️⃣ Você recebe notificação e pode começar a vender ✨</div>
           </div>
 
