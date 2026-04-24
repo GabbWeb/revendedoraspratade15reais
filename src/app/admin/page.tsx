@@ -6,6 +6,7 @@ export default function AdminHomePage() {
   const [stats, setStats] = useState({
     totalRevendedoras: 0,
     revendedorasAtivas: 0,
+    revendedorasPendentes: 0,
     vendasMes: 0,
     receitaMes: 0,
     saldoPendente: 0,
@@ -17,6 +18,7 @@ export default function AdminHomePage() {
       const supabase = createClient()
       const { count: total } = await supabase.from('revendedoras').select('*', { count: 'exact', head: true })
       const { count: ativas } = await supabase.from('revendedoras').select('*', { count: 'exact', head: true }).eq('status', 'ativa')
+      const { count: pendentes } = await supabase.from('revendedoras').select('*', { count: 'exact', head: true }).eq('status', 'pendente')
       const inicioMes = new Date()
       inicioMes.setDate(1)
       inicioMes.setHours(0, 0, 0, 0)
@@ -27,6 +29,7 @@ export default function AdminHomePage() {
       setStats({
         totalRevendedoras: total || 0,
         revendedorasAtivas: ativas || 0,
+        revendedorasPendentes: pendentes || 0,
         vendasMes: vendasMes?.length || 0,
         receitaMes: receita,
         saldoPendente: pendente,
@@ -112,6 +115,20 @@ export default function AdminHomePage() {
 
   const secoes = [
     {
+      label: 'Ativar pendentes',
+      href: '/admin/ativar',
+      desc: stats.revendedorasPendentes > 0
+        ? `${stats.revendedorasPendentes} aguardando ativação`
+        : 'Nenhuma pendente no momento',
+      destaque: stats.revendedorasPendentes > 0,
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+      )
+    },
+    {
       label: 'Revendedoras',
       href: '/admin/revendedoras',
       desc: 'Lista completa com busca e filtros por status',
@@ -182,6 +199,27 @@ export default function AdminHomePage() {
         <div className="bo-sub">Acompanhe o desempenho das revendedoras em tempo real</div>
       </div>
 
+      {stats.revendedorasPendentes > 0 && (
+        <a href="/admin/ativar" className="bo-alert">
+          <div className="bo-alert-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
+          <div className="bo-alert-content">
+            <div className="bo-alert-title">
+              {stats.revendedorasPendentes} {stats.revendedorasPendentes === 1 ? 'revendedora aguarda' : 'revendedoras aguardam'} ativação
+            </div>
+            <div className="bo-alert-desc">Verifique o pagamento e ative as contas →</div>
+          </div>
+          <div className="bo-alert-arrow">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </a>
+      )}
+
       <div className="bo-metrics">
         {metricas.map((m, i) => (
           <div key={i} className="bo-metric">
@@ -203,7 +241,7 @@ export default function AdminHomePage() {
 
       <div className="bo-sections">
         {secoes.map((s, i) => (
-          <a key={i} href={s.href} className="bo-section">
+          <a key={i} href={s.href} className={`bo-section ${s.destaque ? 'bo-section-destaque' : ''}`}>
             <div className="bo-section-icon">{s.icon}</div>
             <div className="bo-section-content">
               <div className="bo-section-label">{s.label}</div>
@@ -281,7 +319,7 @@ export default function AdminHomePage() {
           color: #1A1A1A;
         }
         .bo-hero {
-          margin-bottom: 32px;
+          margin-bottom: 24px;
         }
         .bo-eyebrow {
           font-size: 11px;
@@ -301,6 +339,51 @@ export default function AdminHomePage() {
         .bo-sub {
           font-size: 14px;
           color: #64748B;
+        }
+        .bo-alert {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 18px 22px;
+          background: #FFFBEB;
+          border: 1px solid #FCD34D;
+          border-radius: 12px;
+          text-decoration: none;
+          color: inherit;
+          margin-bottom: 32px;
+          transition: all .15s;
+        }
+        .bo-alert:hover {
+          border-color: #D97706;
+          transform: translateX(2px);
+        }
+        .bo-alert-icon {
+          width: 40px;
+          height: 40px;
+          border-radius: 10px;
+          background: #FCD34D;
+          color: #78350F;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .bo-alert-content {
+          flex: 1;
+        }
+        .bo-alert-title {
+          font-size: 14px;
+          font-weight: 700;
+          color: #78350F;
+          margin-bottom: 2px;
+        }
+        .bo-alert-desc {
+          font-size: 12px;
+          color: #92400E;
+        }
+        .bo-alert-arrow {
+          color: #92400E;
+          flex-shrink: 0;
         }
         .bo-metrics {
           display: grid;
@@ -395,6 +478,17 @@ export default function AdminHomePage() {
         .bo-section:hover {
           border-color: #1A1A1A;
           transform: translateX(2px);
+        }
+        .bo-section-destaque {
+          border-color: #FCD34D;
+          background: #FFFBEB;
+        }
+        .bo-section-destaque .bo-section-icon {
+          background: #FCD34D;
+          color: #78350F;
+        }
+        .bo-section-destaque:hover {
+          border-color: #D97706;
         }
         .bo-section-icon {
           width: 40px;
