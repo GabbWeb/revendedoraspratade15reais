@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase'
 
 type RevendedoraPendente = {
   id: string
@@ -25,14 +24,19 @@ export default function AdminAtivarPage() {
   }, [])
 
   async function carregarPendentes() {
-    const supabase = createClient()
-    const { data } = await supabase
-      .from('revendedoras')
-      .select('id, nome, email, whatsapp, cidade, estado, criado_em')
-      .eq('status', 'pendente')
-      .order('criado_em', { ascending: false })
-
-    setPendentes(data || [])
+    try {
+      const res = await fetch('/api/admin/pendentes')
+      if (!res.ok) {
+        setPendentes([])
+        setLoading(false)
+        return
+      }
+      const data = await res.json()
+      setPendentes(data || [])
+    } catch (e) {
+      console.error('Erro ao carregar pendentes:', e)
+      setPendentes([])
+    }
     setLoading(false)
   }
 
