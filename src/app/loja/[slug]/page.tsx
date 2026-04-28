@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase'
 
 const PRODUTOS_MOCK = [
   { id: 1, nome: 'Anel Solitário Coração', categoria: 'Anéis', preco: 89.90, foto: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600&h=600&fit=crop', destaque: true },
@@ -39,18 +38,17 @@ export default function LojaPage({ params }: { params: { slug: string } }) {
 
   useEffect(() => {
     async function carregar() {
-      const supabase = createClient()
-      const { data } = await supabase
-        .from('revendedoras')
-        .select('*')
-        .eq('subdominio', params.slug)
-        .single()
-
-      if (!data || data.status !== 'ativa') {
-        setLoading(false)
-        return
+      try {
+        const res = await fetch(`/api/loja/${params.slug}`)
+        if (!res.ok) {
+          setLoading(false)
+          return
+        }
+        const data = await res.json()
+        setRevendedora(data)
+      } catch (e) {
+        console.error('Erro ao carregar loja:', e)
       }
-      setRevendedora(data)
       setLoading(false)
     }
     carregar()
