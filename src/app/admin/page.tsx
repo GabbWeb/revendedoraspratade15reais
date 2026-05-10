@@ -1,7 +1,14 @@
 'use client'
 import { useEffect, useState } from 'react'
 
+const ADMIN_PIN = 'prata925'
+
 export default function AdminHomePage() {
+  const [autenticado, setAutenticado] = useState(false)
+  const [checandoAuth, setChecandoAuth] = useState(true)
+  const [pinInput, setPinInput] = useState('')
+  const [erroPin, setErroPin] = useState('')
+
   const [stats, setStats] = useState({
     totalRevendedoras: 0,
     revendedorasAtivas: 0,
@@ -12,7 +19,18 @@ export default function AdminHomePage() {
   })
   const [loading, setLoading] = useState(true)
 
+  // Verifica auth al cargar
   useEffect(() => {
+    const auth = sessionStorage.getItem('admin_auth')
+    if (auth === 'ok') {
+      setAutenticado(true)
+    }
+    setChecandoAuth(false)
+  }, [])
+
+  // Carga stats solo si está autenticado
+  useEffect(() => {
+    if (!autenticado) return
     async function load() {
       try {
         const res = await fetch('/api/admin/stats')
@@ -28,14 +46,18 @@ export default function AdminHomePage() {
       setLoading(false)
     }
     load()
-  }, [])
+  }, [autenticado])
 
-  function formatBRL(val: number) {
-    return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-  }
-
-  function formatNum(n: number) {
-    return n.toLocaleString('pt-BR')
+  function entrarComPin(e: React.FormEvent) {
+    e.preventDefault()
+    if (pinInput === ADMIN_PIN) {
+      sessionStorage.setItem('admin_auth', 'ok')
+      setAutenticado(true)
+      setErroPin('')
+    } else {
+      setErroPin('PIN incorreto')
+      setPinInput('')
+    }
   }
 
   function fazerLogout() {
@@ -46,9 +68,151 @@ export default function AdminHomePage() {
     } catch (e) {
       console.error('Erro ao limpar storage:', e)
     }
-    window.location.href = '/admin'
+    setAutenticado(false)
+    setPinInput('')
+    setStats({
+      totalRevendedoras: 0,
+      revendedorasAtivas: 0,
+      revendedorasPendentes: 0,
+      vendasMes: 0,
+      receitaMes: 0,
+      saldoPendente: 0,
+    })
   }
 
+  function formatBRL(val: number) {
+    return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  }
+
+  function formatNum(n: number) {
+    return n.toLocaleString('pt-BR')
+  }
+
+  // Estado: verificando auth
+  if (checandoAuth) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#FAFAFA' }}>
+        <div style={{ fontSize: 13, color: '#94A3B8', letterSpacing: 1, textTransform: 'uppercase', fontWeight: 600 }}>Carregando</div>
+      </div>
+    )
+  }
+
+  // Estado: no autenticado → mostrar form de PIN
+  if (!autenticado) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#FAFAFA',
+        fontFamily: '-apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif',
+        padding: 20,
+      }}>
+        <div style={{
+          background: 'white',
+          border: '1px solid #EFEFEF',
+          borderRadius: 16,
+          padding: 40,
+          width: '100%',
+          maxWidth: 380,
+          textAlign: 'center',
+        }}>
+          <div style={{
+            width: 56,
+            height: 56,
+            borderRadius: 14,
+            background: '#1A1A1A',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 20px',
+            fontWeight: 800,
+            fontSize: 16,
+            letterSpacing: .5,
+          }}>P15</div>
+
+          <div style={{
+            fontSize: 11,
+            fontWeight: 600,
+            color: '#E8396A',
+            textTransform: 'uppercase',
+            letterSpacing: 1.5,
+            marginBottom: 8,
+          }}>Backoffice</div>
+
+          <h1 style={{
+            fontSize: 22,
+            fontWeight: 700,
+            color: '#1A1A1A',
+            marginBottom: 8,
+            margin: '0 0 8px',
+          }}>Área restrita</h1>
+
+          <p style={{
+            fontSize: 13,
+            color: '#64748B',
+            marginBottom: 28,
+            margin: '0 0 28px',
+          }}>Digite o PIN para acessar</p>
+
+          <form onSubmit={entrarComPin}>
+            <input
+              type="password"
+              value={pinInput}
+              onChange={e => { setPinInput(e.target.value); setErroPin('') }}
+              placeholder="PIN"
+              autoFocus
+              style={{
+                width: '100%',
+                padding: '14px 16px',
+                fontSize: 15,
+                border: '1px solid',
+                borderColor: erroPin ? '#DC2626' : '#E5E5E5',
+                borderRadius: 10,
+                outline: 'none',
+                textAlign: 'center',
+                letterSpacing: 4,
+                fontFamily: 'inherit',
+                boxSizing: 'border-box',
+                marginBottom: erroPin ? 8 : 16,
+              }}
+            />
+
+            {erroPin && (
+              <div style={{
+                fontSize: 12,
+                color: '#DC2626',
+                marginBottom: 16,
+                fontWeight: 500,
+              }}>{erroPin}</div>
+            )}
+
+            <button
+              type="submit"
+              style={{
+                width: '100%',
+                padding: '14px 16px',
+                background: '#1A1A1A',
+                color: 'white',
+                border: 'none',
+                borderRadius: 10,
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              Entrar
+            </button>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
+  // Estado: cargando stats
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
