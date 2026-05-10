@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { createClient, type Revendedora } from '@/lib/supabase'
+import { type Revendedora } from '@/lib/supabase'
 
 export default function AdminRevendedorasPage() {
   const [revendedoras, setRevendedoras] = useState<Revendedora[]>([])
@@ -10,12 +10,19 @@ export default function AdminRevendedorasPage() {
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient()
-      const { data } = await supabase
-        .from('revendedoras')
-        .select('*')
-        .order('criado_em', { ascending: false })
-      setRevendedoras(data || [])
+      try {
+        const res = await fetch('/api/admin/revendedoras')
+        if (!res.ok) {
+          setRevendedoras([])
+          setLoading(false)
+          return
+        }
+        const data = await res.json()
+        setRevendedoras(data || [])
+      } catch (e) {
+        console.error('Erro ao carregar revendedoras:', e)
+        setRevendedoras([])
+      }
       setLoading(false)
     }
     load()
