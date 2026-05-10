@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase'
 
 export default function AdminHomePage() {
   const [stats, setStats] = useState({
@@ -15,25 +14,17 @@ export default function AdminHomePage() {
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient()
-      const { count: total } = await supabase.from('revendedoras').select('*', { count: 'exact', head: true })
-      const { count: ativas } = await supabase.from('revendedoras').select('*', { count: 'exact', head: true }).eq('status', 'ativa')
-      const { count: pendentes } = await supabase.from('revendedoras').select('*', { count: 'exact', head: true }).eq('status', 'pendente')
-      const inicioMes = new Date()
-      inicioMes.setDate(1)
-      inicioMes.setHours(0, 0, 0, 0)
-      const { data: vendasMes } = await supabase.from('vendas').select('valor_total, valor_comissao').gte('criado_em', inicioMes.toISOString()).eq('status', 'pago')
-      const receita = vendasMes?.reduce((acc, v) => acc + Number(v.valor_total), 0) || 0
-      const { data: saldos } = await supabase.from('revendedoras').select('saldo_disponivel')
-      const pendente = saldos?.reduce((acc, r) => acc + Number(r.saldo_disponivel), 0) || 0
-      setStats({
-        totalRevendedoras: total || 0,
-        revendedorasAtivas: ativas || 0,
-        revendedorasPendentes: pendentes || 0,
-        vendasMes: vendasMes?.length || 0,
-        receitaMes: receita,
-        saldoPendente: pendente,
-      })
+      try {
+        const res = await fetch('/api/admin/stats')
+        if (!res.ok) {
+          setLoading(false)
+          return
+        }
+        const data = await res.json()
+        setStats(data)
+      } catch (e) {
+        console.error('Erro ao carregar stats:', e)
+      }
       setLoading(false)
     }
     load()
@@ -45,6 +36,17 @@ export default function AdminHomePage() {
 
   function formatNum(n: number) {
     return n.toLocaleString('pt-BR')
+  }
+
+  function fazerLogout() {
+    try {
+      sessionStorage.removeItem('admin_auth')
+      sessionStorage.clear()
+      localStorage.removeItem('admin_auth')
+    } catch (e) {
+      console.error('Erro ao limpar storage:', e)
+    }
+    window.location.href = '/admin'
   }
 
   if (loading) {
@@ -187,7 +189,7 @@ export default function AdminHomePage() {
             <div className="bo-brand-sub">Backoffice administrativo</div>
           </div>
         </div>
-        <button onClick={() => { sessionStorage.removeItem('admin_auth'); window.location.reload() }} className="bo-logout">
+        <button onClick={fazerLogout} className="bo-logout" type="button">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Sair
         </button>
