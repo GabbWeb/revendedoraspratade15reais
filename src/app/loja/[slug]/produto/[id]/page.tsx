@@ -1,19 +1,23 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase'
 
-const PRODUTOS_MOCK = [
-  { id: 1, nome: 'Anel Solitário Coração', categoria: 'Anéis', preco: 89.90, foto: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&h=800&fit=crop', descricao: 'Anel delicado em prata 925 com detalhe de coração. Perfeito para uso diário ou presente especial. Acabamento ródio branco que garante brilho duradouro e resistência.', tamanhos: ['14', '15', '16', '17', '18', '19'] },
-  { id: 2, nome: 'Brincos Argola Trançada', categoria: 'Brincos', preco: 65.50, foto: 'https://images.unsplash.com/photo-1535632787350-4e68ef0ac584?w=800&h=800&fit=crop', descricao: 'Argolas trançadas em prata 925 com 1.5cm de diâmetro. Design clássico que combina com qualquer ocasião. Fecho seguro tipo click.', tamanhos: ['Único'] },
-  { id: 3, nome: 'Colar Veneziana 45cm', categoria: 'Colares', preco: 129.00, foto: 'https://images.unsplash.com/photo-1599643477877-530eb83abc8e?w=800&h=800&fit=crop', descricao: 'Colar veneziana clássica em prata 925 maciça. Comprimento de 45cm com fecho mosquetão. Espessura confortável para uso diário.', tamanhos: ['40cm', '45cm', '50cm'] },
-  { id: 4, nome: 'Pulseira Berloque Estrela', categoria: 'Pulseiras', preco: 75.00, foto: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&h=800&fit=crop', descricao: 'Pulseira ajustável com pingente em forma de estrela. Prata 925 com banho de ródio. Tamanho regulável de 16-20cm.', tamanhos: ['Único'] },
-  { id: 5, nome: 'Anel Infinito Zircônia', categoria: 'Anéis', preco: 95.00, foto: 'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=800&h=800&fit=crop', descricao: 'Anel símbolo do infinito cravejado com zircônias delicadas. Prata 925 legítima com acabamento brilhante.', tamanhos: ['14', '15', '16', '17', '18'] },
-  { id: 6, nome: 'Brincos Pérola Clássica', categoria: 'Brincos', preco: 55.00, foto: 'https://images.unsplash.com/photo-1631982690223-8aa4be0a2497?w=800&h=800&fit=crop', descricao: 'Brincos com pérola natural cultivada de 6mm. Base em prata 925 com pino de pressão. Atemporais e elegantes.', tamanhos: ['Único'] },
-  { id: 7, nome: 'Conjunto Cordão + Pingente', categoria: 'Conjuntos', preco: 159.90, foto: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&h=800&fit=crop', descricao: 'Kit com cordão veneziana 45cm + pingente delicado. Toda a peça em prata 925. Embalagem para presente inclusa.', tamanhos: ['Único'] },
-  { id: 8, nome: 'Tornozeleira Veneziana', categoria: 'Tornozeleiras', preco: 49.90, foto: 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=800&h=800&fit=crop', descricao: 'Tornozeleira veneziana ajustável em prata 925. Comprimento regulável de 22 a 26cm. Perfeita para o verão.', tamanhos: ['Único'] },
-]
+type Produto = {
+  id: string
+  sku: string
+  nome: string
+  descricao: string | null
+  categoria: string | null
+  preco: number
+  preco_promo: number | null
+  fotos: string[]
+  estoque: number
+  destaque: boolean
+  lancamento: boolean
+  tamanho: string | null
+  cor: string | null
+  ativo: boolean
+}
 
 type Revendedora = {
   id: string
@@ -25,32 +29,43 @@ type Revendedora = {
 }
 
 export default function ProdutoPage({ params }: { params: { slug: string; id: string } }) {
-  const router = useRouter()
   const [revendedora, setRevendedora] = useState<Revendedora | null>(null)
+  const [produto, setProduto] = useState<Produto | null>(null)
   const [loading, setLoading] = useState(true)
-  const [tamanhoSelecionado, setTamanhoSelecionado] = useState<string>('')
-
-  const produto = PRODUTOS_MOCK.find(p => p.id === parseInt(params.id))
+  const [erro, setErro] = useState<string | null>(null)
+  const [fotoAtiva, setFotoAtiva] = useState(0)
 
   useEffect(() => {
-    async function carregar() {
-      const supabase = createClient()
-      const { data } = await supabase
-        .from('revendedoras')
-        .select('*')
-        .eq('subdominio', params.slug)
-        .single()
+    async function carregarTudo() {
+      try {
+        // Carrega revendedora e produto em paralelo
+        const [resRev, resProd] = await Promise.all([
+          fetch(`/api/loja/${params.slug}`),
+          fetch(`/api/produtos/${params.id}`),
+        ])
 
-      if (!data || data.status !== 'ativa') {
-        setLoading(false)
-        return
+        if (!resRev.ok) {
+          setErro('loja')
+          setLoading(false)
+          return
+        }
+        if (!resProd.ok) {
+          setErro('produto')
+          setLoading(false)
+          return
+        }
+
+        const [dataRev, dataProd] = await Promise.all([resRev.json(), resProd.json()])
+        setRevendedora(dataRev)
+        setProduto(dataProd)
+      } catch (e) {
+        console.error('Erro ao carregar:', e)
+        setErro('rede')
       }
-      setRevendedora(data)
-      if (produto && produto.tamanhos.length === 1) setTamanhoSelecionado(produto.tamanhos[0])
       setLoading(false)
     }
-    carregar()
-  }, [params.slug])
+    carregarTudo()
+  }, [params.slug, params.id])
 
   function formatBRL(val: number) {
     return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -59,17 +74,21 @@ export default function ProdutoPage({ params }: { params: { slug: string; id: st
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAFAFA' }}>
-        <div style={{ fontSize: 13, color: '#999', letterSpacing: 1, textTransform: 'uppercase', fontWeight: 500 }}>Carregando...</div>
+        <div style={{ fontSize: 13, color: '#999', letterSpacing: 1, textTransform: 'uppercase', fontWeight: 500 }}>
+          Carregando...
+        </div>
       </div>
     )
   }
 
-  if (!revendedora || !produto) {
+  if (erro || !revendedora || !produto) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAFAFA', padding: 40 }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>💎</div>
-          <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Produto não encontrado</h1>
+          <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
+            {erro === 'loja' ? 'Loja não encontrada' : 'Produto não encontrado'}
+          </h1>
           <Link href={`/loja/${params.slug}`} style={{ color: '#555', fontSize: 14, textDecoration: 'underline' }}>
             ← Voltar para a loja
           </Link>
@@ -78,9 +97,18 @@ export default function ProdutoPage({ params }: { params: { slug: string; id: st
     )
   }
 
+  const precoFinal = produto.preco_promo && produto.preco_promo > 0 && produto.preco_promo < produto.preco
+    ? produto.preco_promo
+    : produto.preco
+  const temDesconto = produto.preco_promo && produto.preco_promo > 0 && produto.preco_promo < produto.preco
+  const descontoPct = temDesconto ? Math.round(((produto.preco - precoFinal) / produto.preco) * 100) : 0
+
+  const fotos = (produto.fotos && produto.fotos.length > 0) ? produto.fotos : []
+  const fotoPrincipal = fotos[fotoAtiva] || ''
+
   const whatsappLimpo = revendedora.whatsapp.replace(/\D/g, '')
   const mensagemWhatsApp = encodeURIComponent(
-    `Olá ${revendedora.nome.split(' ')[0]}! 💎\n\nTenho interesse no produto:\n*${produto.nome}*\n${tamanhoSelecionado ? `Tamanho: ${tamanhoSelecionado}\n` : ''}Valor: ${formatBRL(produto.preco)}\n\nPode me passar mais informações?`
+    `Olá ${revendedora.nome.split(' ')[0]}! 💎\n\nTenho interesse no produto:\n*${produto.nome}*\n${produto.sku ? `SKU: ${produto.sku}\n` : ''}${produto.tamanho ? `Tamanho: ${produto.tamanho}\n` : ''}Valor: ${formatBRL(precoFinal)}\n\nPode me passar mais informações?`
   )
   const linkWhatsApp = `https://wa.me/55${whatsappLimpo}?text=${mensagemWhatsApp}`
 
@@ -101,65 +129,156 @@ export default function ProdutoPage({ params }: { params: { slug: string; id: st
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 48, alignItems: 'start' }}>
 
+          {/* GALERIA DE FOTOS */}
           <div style={{ position: 'sticky', top: 100 }}>
-            <div style={{ aspectRatio: '1', background: '#F5F5F5', borderRadius: 16, overflow: 'hidden', border: '1px solid #EEE' }}>
-              <img src={produto.foto} alt={produto.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
+            <div style={{ aspectRatio: '1', background: '#F5F5F5', borderRadius: 16, overflow: 'hidden', border: '1px solid #EEE', position: 'relative' }}>
+              {fotoPrincipal ? (
+                <img
+                  src={fotoPrincipal}
+                  alt={produto.nome}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48 }}>
+                  💎
+                </div>
+              )}
+              {temDesconto && (
+                <div style={{ position: 'absolute', top: 16, right: 16, background: '#DC2626', color: 'white', fontSize: 12, padding: '6px 12px', borderRadius: 14, letterSpacing: 1, textTransform: 'uppercase', fontWeight: 700 }}>
+                  -{descontoPct}%
+                </div>
+              )}
             </div>
+
+            {/* THUMBNAILS - só mostra se tem mais de 1 foto */}
+            {fotos.length > 1 && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 12, overflowX: 'auto', paddingBottom: 4 }}>
+                {fotos.map((foto, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setFotoAtiva(i)}
+                    style={{
+                      flexShrink: 0,
+                      width: 72,
+                      height: 72,
+                      borderRadius: 10,
+                      overflow: 'hidden',
+                      border: '2px solid',
+                      borderColor: fotoAtiva === i ? '#1A1A1A' : '#EEE',
+                      background: '#F5F5F5',
+                      cursor: 'pointer',
+                      padding: 0,
+                    }}
+                  >
+                    <img
+                      src={foto}
+                      alt={`${produto.nome} - foto ${i + 1}`}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
+          {/* INFO PRODUTO */}
           <div>
             <div style={{ fontSize: 11, color: '#999', letterSpacing: 2, textTransform: 'uppercase', fontWeight: 600, marginBottom: 12 }}>
-              {produto.categoria}
+              {produto.categoria || 'Joia 925'}
             </div>
 
             <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 32, fontWeight: 700, color: '#1A1A1A', letterSpacing: -0.5, lineHeight: 1.2, marginBottom: 16 }}>
               {produto.nome}
             </h1>
 
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 8 }}>
-              <div style={{ fontSize: 32, fontWeight: 700, color: '#1A1A1A' }}>
-                {formatBRL(produto.preco)}
-              </div>
+            {/* PREÇO */}
+            <div style={{ marginBottom: 8 }}>
+              {temDesconto ? (
+                <>
+                  <div style={{ fontSize: 15, color: '#999', textDecoration: 'line-through', marginBottom: 4 }}>
+                    {formatBRL(produto.preco)}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+                    <div style={{ fontSize: 32, fontWeight: 700, color: '#DC2626' }}>
+                      {formatBRL(precoFinal)}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div style={{ fontSize: 32, fontWeight: 700, color: '#1A1A1A' }}>
+                  {formatBRL(precoFinal)}
+                </div>
+              )}
             </div>
-            <div style={{ fontSize: 13, color: '#777', marginBottom: 32 }}>
-              ou 3x de {formatBRL(produto.preco / 3)} sem juros
+            <div style={{ fontSize: 13, color: '#777', marginBottom: 24 }}>
+              ou 3x de {formatBRL(precoFinal / 3)} sem juros
             </div>
 
-            <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #EEE', marginBottom: 24 }}>
-              <div style={{ fontSize: 11, color: '#999', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, marginBottom: 12 }}>
-                Descrição
-              </div>
-              <p style={{ fontSize: 14, color: '#444', lineHeight: 1.7, margin: 0 }}>
-                {produto.descricao}
-              </p>
-            </div>
-
-            {produto.tamanhos.length > 1 && (
-              <div style={{ marginBottom: 24 }}>
-                <div style={{ fontSize: 11, color: '#999', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, marginBottom: 12 }}>
-                  Tamanho
-                </div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {produto.tamanhos.map(t => (
-                    <button
-                      key={t}
-                      onClick={() => setTamanhoSelecionado(t)}
-                      style={{
-                        padding: '10px 18px', borderRadius: 8,
-                        border: '1px solid', borderColor: tamanhoSelecionado === t ? '#1A1A1A' : '#EEE',
-                        background: tamanhoSelecionado === t ? '#1A1A1A' : 'white',
-                        color: tamanhoSelecionado === t ? 'white' : '#555',
-                        fontSize: 13, fontWeight: 500, cursor: 'pointer',
-                        fontFamily: 'inherit',
-                      }}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
+            {/* ATRIBUTOS - tamanho e cor como info, só se existem */}
+            {(produto.tamanho || produto.cor || produto.sku) && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+                {produto.tamanho && (
+                  <div style={{
+                    padding: '8px 14px',
+                    background: 'white',
+                    border: '1px solid #EEE',
+                    borderRadius: 10,
+                    fontSize: 13,
+                    color: '#1A1A1A',
+                  }}>
+                    <span style={{ color: '#999', fontWeight: 500 }}>Tamanho: </span>
+                    <span style={{ fontWeight: 600 }}>{produto.tamanho}</span>
+                  </div>
+                )}
+                {produto.cor && (
+                  <div style={{
+                    padding: '8px 14px',
+                    background: 'white',
+                    border: '1px solid #EEE',
+                    borderRadius: 10,
+                    fontSize: 13,
+                    color: '#1A1A1A',
+                  }}>
+                    <span style={{ color: '#999', fontWeight: 500 }}>Cor: </span>
+                    <span style={{ fontWeight: 600 }}>{produto.cor}</span>
+                  </div>
+                )}
+                {produto.sku && (
+                  <div style={{
+                    padding: '8px 14px',
+                    background: 'white',
+                    border: '1px solid #EEE',
+                    borderRadius: 10,
+                    fontSize: 13,
+                    color: '#999',
+                  }}>
+                    <span style={{ fontWeight: 500 }}>SKU: </span>
+                    <span style={{ fontWeight: 600, color: '#555' }}>{produto.sku}</span>
+                  </div>
+                )}
               </div>
             )}
 
+            {/* DESCRIÇÃO */}
+            {produto.descricao && (
+              <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #EEE', marginBottom: 24 }}>
+                <div style={{ fontSize: 11, color: '#999', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, marginBottom: 12 }}>
+                  Descrição
+                </div>
+                <p style={{ fontSize: 14, color: '#444', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>
+                  {produto.descricao}
+                </p>
+              </div>
+            )}
+
+            {/* ESTOQUE */}
+            {produto.estoque > 0 && produto.estoque <= 5 && (
+              <div style={{ fontSize: 12, color: '#DC2626', marginBottom: 16, fontWeight: 600 }}>
+                Restam apenas {produto.estoque} {produto.estoque === 1 ? 'unidade' : 'unidades'}!
+              </div>
+            )}
+
+            {/* CTA WHATSAPP */}
             <a
               href={linkWhatsApp}
               target="_blank"
@@ -181,6 +300,7 @@ export default function ProdutoPage({ params }: { params: { slug: string; id: st
               {revendedora.nome.split(' ')[0]} responde em até 30 minutos
             </div>
 
+            {/* SELOS */}
             <div style={{ marginTop: 32, paddingTop: 32, borderTop: '1px solid #EEE' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
