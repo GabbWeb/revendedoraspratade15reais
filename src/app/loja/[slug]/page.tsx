@@ -13,11 +13,9 @@ type Produto = {
   fotos: string[]
   estoque: number
   destaque: boolean
+  lancamento: boolean
   tamanho: string | null
   cor: string | null
-  marca: string | null
-  itens_inclusos: string | null
-  peso_g: number | null
 }
 
 type Revendedora = {
@@ -25,40 +23,59 @@ type Revendedora = {
   nome: string
   nome_loja: string | null
   whatsapp: string
-  subdominio: string
+  cidade: string
+  estado: string
+  foto_url: string | null
+  bio: string | null
   status: string
+  subdominio: string
 }
 
-export default function ProdutoPage({ params }: { params: { slug: string; id: string } }) {
+export default function LojaPage({ params }: { params: { slug: string } }) {
   const [revendedora, setRevendedora] = useState<Revendedora | null>(null)
-  const [produto, setProduto] = useState<Produto | null>(null)
+  const [produtos, setProdutos] = useState<Produto[]>([])
+  const [categorias, setCategorias] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
-  const [fotoAtiva, setFotoAtiva] = useState(0)
+  const [categoriaAtiva, setCategoriaAtiva] = useState('Tudo')
+  const [busca, setBusca] = useState('')
 
   useEffect(() => {
-    async function carregar() {
+    async function carregarRevendedora() {
       try {
-        const [resRev, resProd] = await Promise.all([
-          fetch(`/api/loja/${params.slug}`),
-          fetch(`/api/produtos/${params.id}`),
-        ])
-
-        if (resRev.ok) {
-          const data = await resRev.json()
-          setRevendedora(data)
+        const res = await fetch(`/api/loja/${params.slug}`)
+        if (!res.ok) {
+          setLoading(false)
+          return
         }
+        const data = await res.json()
+        setRevendedora(data)
+      } catch (e) {
+        console.error('Erro ao carregar revendedora:', e)
+      }
+    }
+    carregarRevendedora()
+  }, [params.slug])
 
-        if (resProd.ok) {
-          const data = await resProd.json()
-          setProduto(data)
+  useEffect(() => {
+    async function carregarProdutos() {
+      try {
+        const q = new URLSearchParams()
+        if (categoriaAtiva !== 'Tudo') q.set('categoria', categoriaAtiva)
+        if (busca) q.set('busca', busca)
+        const res = await fetch(`/api/produtos?${q.toString()}`)
+        if (!res.ok) return
+        const data = await res.json()
+        setProdutos(data.produtos || [])
+        if (categorias.length === 0) {
+          setCategorias(['Tudo', ...(data.categorias || [])])
         }
       } catch (e) {
-        console.error('Erro ao carregar:', e)
+        console.error('Erro ao carregar produtos:', e)
       }
       setLoading(false)
     }
-    carregar()
-  }, [params.slug, params.id])
+    carregarProdutos()
+  }, [categoriaAtiva, busca])
 
   function formatBRL(val: number) {
     return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -67,198 +84,229 @@ export default function ProdutoPage({ params }: { params: { slug: string; id: st
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAFAFA' }}>
-        <div style={{ fontSize: 13, color: '#999', letterSpacing: 1, textTransform: 'uppercase', fontWeight: 500 }}>Carregando...</div>
-      </div>
-    )
-  }
-
-  if (!revendedora || !produto) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAFAFA', padding: 40 }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>💎</div>
-          <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Produto não encontrado</h1>
-          <Link href={`/loja/${params.slug}`} style={{ color: '#555', fontSize: 14, textDecoration: 'underline' }}>
-            ← Voltar para a loja
-          </Link>
+        <div style={{ fontSize: 13, color: '#999', letterSpacing: 1, textTransform: 'uppercase', fontWeight: 500 }}>
+          Carregando loja...
         </div>
       </div>
     )
   }
 
-  const whatsappLimpo = revendedora.whatsapp.replace(/\D/g, '')
-  const precoFinal = produto.preco_promo && produto.preco_promo > 0 && produto.preco_promo < produto.preco ? produto.preco_promo : produto.preco
-  const temDesconto = produto.preco_promo && produto.preco_promo > 0 && produto.preco_promo < produto.preco
-  const descontoPercent = temDesconto ? Math.round((1 - produto.preco_promo! / produto.preco) * 100) : 0
+  if (!revendedora) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAFAFA', padding: 40 }}>
+        <div style={{ textAlign: 'center', maxWidth: 400 }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>💎</div>
+          <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 28, fontWeight: 700, color: '#1A1A1A', marginBottom: 8 }}>
+            Loja não encontrada
+          </h1>
+          <p style={{ fontSize: 14, color: '#777', lineHeight: 1.6 }}>
+            Esta loja pode estar inativa ou o link está incorreto.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
-  const mensagemWhatsApp = encodeURIComponent(
-    `Olá ${revendedora.nome.split(' ')[0]}! 💎\n\nTenho interesse no produto:\n*${produto.nome}*\nSKU: ${produto.sku}\nValor: ${formatBRL(precoFinal)}\n\nPode me passar mais informações?`
-  )
-  const linkWhatsApp = `https://wa.me/55${whatsappLimpo}?text=${mensagemWhatsApp}`
+  const nomeLoja = revendedora.nome_loja || `Loja da ${revendedora.nome.split(' ')[0]}`
+  const whatsappLimpo = revendedora.whatsapp.replace(/\D/g, '')
 
   return (
     <div style={{ minHeight: '100vh', background: '#FAFAFA', fontFamily: '-apple-system, "Inter", sans-serif' }}>
 
-      <header style={{ background: 'white', borderBottom: '1px solid #EEE', padding: '20px 24px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-          <Link href={`/loja/${params.slug}`} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#555', textDecoration: 'none', fontWeight: 500 }}>
-            ← Voltar à loja
-          </Link>
-          <div style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 16, fontWeight: 700, color: '#1A1A1A' }}>
-            {revendedora.nome_loja || `Loja da ${revendedora.nome.split(' ')[0]}`}
+      <header style={{ background: 'white', borderBottom: '1px solid #EEE', padding: '20px 24px', position: 'sticky', top: 0, zIndex: 100 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: '50%',
+              background: revendedora.foto_url ? `url(${revendedora.foto_url}) center/cover` : '#1A1A1A',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'white', fontWeight: 700, fontSize: 18,
+            }}>
+              {!revendedora.foto_url && revendedora.nome[0]?.toUpperCase()}
+            </div>
+            <div>
+              <div style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 20, fontWeight: 700, color: '#1A1A1A', letterSpacing: -0.3, lineHeight: 1.1 }}>
+                {nomeLoja}
+              </div>
+              <div style={{ fontSize: 11, color: '#999', letterSpacing: 1, textTransform: 'uppercase', marginTop: 2, fontWeight: 500 }}>
+                Joias 925 · {revendedora.cidade}/{revendedora.estado}
+              </div>
+            </div>
           </div>
+
+          
+            href={`https://wa.me/55${whatsappLimpo}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '10px 18px', borderRadius: 24,
+              background: '#1A1A1A', color: 'white',
+              fontSize: 13, fontWeight: 600, textDecoration: 'none',
+            }}
+          >
+            Atendimento
+          </a>
         </div>
       </header>
 
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 48, alignItems: 'start' }}>
+      <section style={{ padding: '60px 24px 40px', textAlign: 'center', maxWidth: 800, margin: '0 auto' }}>
+        <div style={{ fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: '#999', fontWeight: 600, marginBottom: 16 }}>
+          Prata 925 Legítima
+        </div>
+        <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 700, color: '#1A1A1A', letterSpacing: -1, lineHeight: 1.15, marginBottom: 16 }}>
+          Joias que contam<br/>
+          <em style={{ fontStyle: 'italic', color: '#555' }}>histórias suas</em>
+        </h1>
+        <p style={{ fontSize: 15, color: '#777', lineHeight: 1.7, maxWidth: 520, margin: '0 auto' }}>
+          {revendedora.bio || `Curadoria especial de peças em prata 925, escolhidas com carinho por ${revendedora.nome.split(' ')[0]} para você.`}
+        </p>
+      </section>
 
-          <div style={{ position: 'sticky', top: 100 }}>
-            <div style={{ aspectRatio: '1', background: '#F5F5F5', borderRadius: 16, overflow: 'hidden', border: '1px solid #EEE', marginBottom: 12 }}>
-              {produto.fotos && produto.fotos.length > 0 && (
-                <img src={produto.fotos[fotoAtiva]} alt={produto.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
-              )}
-            </div>
-            {produto.fotos && produto.fotos.length > 1 && (
-              <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
-                {produto.fotos.map((foto, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setFotoAtiva(i)}
-                    style={{
-                      width: 70, height: 70, flexShrink: 0,
-                      borderRadius: 8, overflow: 'hidden',
-                      border: '2px solid', borderColor: fotoAtiva === i ? '#1A1A1A' : '#EEE',
-                      cursor: 'pointer', padding: 0, background: '#F5F5F5',
-                    }}
-                  >
-                    <img src={foto} alt={`${produto.nome} ${i+1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <div style={{ fontSize: 11, color: '#999', letterSpacing: 2, textTransform: 'uppercase', fontWeight: 600, marginBottom: 12 }}>
-              {produto.categoria}
-            </div>
-
-            <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 28, fontWeight: 700, color: '#1A1A1A', letterSpacing: -0.5, lineHeight: 1.2, marginBottom: 16 }}>
-              {produto.nome}
-            </h1>
-
-            {temDesconto ? (
-              <>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 4, flexWrap: 'wrap' }}>
-                  <div style={{ fontSize: 16, color: '#999', textDecoration: 'line-through' }}>
-                    {formatBRL(produto.preco)}
-                  </div>
-                  <div style={{ fontSize: 12, color: 'white', background: '#DC2626', padding: '3px 10px', borderRadius: 4, fontWeight: 700 }}>
-                    -{descontoPercent}%
-                  </div>
-                </div>
-                <div style={{ fontSize: 32, fontWeight: 700, color: '#DC2626', marginBottom: 4 }}>
-                  {formatBRL(precoFinal)}
-                </div>
-              </>
-            ) : (
-              <div style={{ fontSize: 32, fontWeight: 700, color: '#1A1A1A', marginBottom: 4 }}>
-                {formatBRL(precoFinal)}
-              </div>
-            )}
-            <div style={{ fontSize: 13, color: '#777', marginBottom: 24 }}>
-              ou 3x de {formatBRL(precoFinal / 3)} sem juros
-            </div>
-
-            {produto.descricao && (
-              <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #EEE', marginBottom: 24 }}>
-                <div style={{ fontSize: 11, color: '#999', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, marginBottom: 12 }}>
-                  Descrição
-                </div>
-                <p style={{ fontSize: 14, color: '#444', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>
-                  {produto.descricao}
-                </p>
-              </div>
-            )}
-
-            {(produto.tamanho || produto.cor) && (
-              <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
-                {produto.tamanho && (
-                  <div style={{ flex: 1, minWidth: 120, background: 'white', padding: '12px 16px', borderRadius: 10, border: '1px solid #EEE' }}>
-                    <div style={{ fontSize: 10, color: '#999', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600 }}>Tamanho</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: '#1A1A1A', marginTop: 2 }}>{produto.tamanho}</div>
-                  </div>
-                )}
-                {produto.cor && (
-                  <div style={{ flex: 1, minWidth: 120, background: 'white', padding: '12px 16px', borderRadius: 10, border: '1px solid #EEE' }}>
-                    <div style={{ fontSize: 10, color: '#999', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600 }}>Cor</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: '#1A1A1A', marginTop: 2 }}>{produto.cor}</div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <a
-              href={linkWhatsApp}
-              target="_blank"
-              rel="noopener noreferrer"
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px 32px' }}>
+        <div style={{ marginBottom: 20 }}>
+          <input
+            type="text"
+            placeholder="Buscar joia..."
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            style={{
+              width: '100%', padding: '14px 18px',
+              border: '1px solid #EEE', borderRadius: 12,
+              fontSize: 14, background: 'white',
+              outline: 'none',
+              fontFamily: 'inherit',
+              boxSizing: 'border-box',
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8 }}>
+          {categorias.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setCategoriaAtiva(cat)}
               style={{
-                display: 'block', width: '100%', textAlign: 'center',
-                padding: '16px 20px', borderRadius: 12,
-                background: '#1A1A1A', color: 'white',
-                fontSize: 15, fontWeight: 600, textDecoration: 'none',
-                marginBottom: 12,
-                boxSizing: 'border-box',
+                padding: '8px 18px', borderRadius: 24,
+                border: '1px solid',
+                borderColor: categoriaAtiva === cat ? '#1A1A1A' : '#EEE',
+                background: categoriaAtiva === cat ? '#1A1A1A' : 'white',
+                color: categoriaAtiva === cat ? 'white' : '#555',
+                fontSize: 13, fontWeight: 500,
+                whiteSpace: 'nowrap', cursor: 'pointer',
+                fontFamily: 'inherit',
               }}
             >
-              Comprar via WhatsApp
-            </a>
-
-            <div style={{ fontSize: 12, color: '#999', textAlign: 'center', lineHeight: 1.6 }}>
-              {produto.estoque} unidades disponíveis · SKU: {produto.sku}
-            </div>
-
-            <div style={{ marginTop: 32, paddingTop: 32, borderTop: '1px solid #EEE' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                  <span style={{ fontSize: 16, color: '#1A1A1A' }}>✦</span>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#1A1A1A' }}>Prata 925</div>
-                    <div style={{ fontSize: 11, color: '#777' }}>Legítima certificada</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                  <span style={{ fontSize: 16, color: '#1A1A1A' }}>◇</span>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#1A1A1A' }}>Frete</div>
-                    <div style={{ fontSize: 11, color: '#777' }}>Para todo o Brasil</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                  <span style={{ fontSize: 16, color: '#1A1A1A' }}>↺</span>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#1A1A1A' }}>Troca grátis</div>
-                    <div style={{ fontSize: 11, color: '#777' }}>Em até 7 dias</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                  <span style={{ fontSize: 16, color: '#1A1A1A' }}>✓</span>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#1A1A1A' }}>Garantia</div>
-                    <div style={{ fontSize: 11, color: '#777' }}>7 dias contra defeitos</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
+              {cat}
+            </button>
+          ))}
         </div>
       </div>
 
-      <footer style={{ background: '#1A1A1A', color: 'white', padding: '32px 24px', marginTop: 80, textAlign: 'center' }}>
-        <div style={{ fontSize: 12, color: '#999', letterSpacing: 2, textTransform: 'uppercase' }}>
-          Joias 925 · Prata Legítima
+      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px 80px' }}>
+        {produtos.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 60, color: '#999' }}>
+            Nenhuma joia encontrada nesta busca.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 24 }}>
+            {produtos.map(p => {
+              const precoFinal = p.preco_promo && p.preco_promo > 0 && p.preco_promo < p.preco ? p.preco_promo : p.preco
+              const temDesconto = p.preco_promo && p.preco_promo > 0 && p.preco_promo < p.preco
+              const fotoPrincipal = (p.fotos && p.fotos.length > 0) ? p.fotos[0] : ''
+
+              return (
+                <Link
+                  key={p.id}
+                  href={`/loja/${params.slug}/produto/${p.id}`}
+                  style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
+                >
+                  <div style={{ background: 'white', borderRadius: 16, overflow: 'hidden', border: '1px solid #EEE', transition: 'all .2s' }}>
+                    <div style={{ position: 'relative', paddingTop: '100%', background: '#F5F5F5', overflow: 'hidden' }}>
+                      {fotoPrincipal && (
+                        <img src={fotoPrincipal} alt={p.nome} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}/>
+                      )}
+                      {p.destaque && (
+                        <div style={{ position: 'absolute', top: 12, left: 12, background: '#1A1A1A', color: 'white', fontSize: 10, padding: '4px 10px', borderRadius: 12, letterSpacing: 1, textTransform: 'uppercase', fontWeight: 600 }}>
+                          Destaque
+                        </div>
+                      )}
+                      {temDesconto && (
+                        <div style={{ position: 'absolute', top: 12, right: 12, background: '#DC2626', color: 'white', fontSize: 10, padding: '4px 10px', borderRadius: 12, letterSpacing: 1, textTransform: 'uppercase', fontWeight: 700 }}>
+                          Promo
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ padding: 16 }}>
+                      <div style={{ fontSize: 10, color: '#999', letterSpacing: 1.5, textTransform: 'uppercase', fontWeight: 600, marginBottom: 6 }}>
+                        {p.categoria}
+                      </div>
+                      <div style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 15, color: '#1A1A1A', marginBottom: 8, lineHeight: 1.3, fontWeight: 600, minHeight: 40 }}>
+                        {p.nome}
+                      </div>
+                      {temDesconto ? (
+                        <>
+                          <div style={{ fontSize: 12, color: '#999', textDecoration: 'line-through', marginBottom: 2 }}>
+                            {formatBRL(p.preco)}
+                          </div>
+                          <div style={{ fontSize: 18, color: '#DC2626', fontWeight: 700 }}>
+                            {formatBRL(precoFinal)}
+                          </div>
+                        </>
+                      ) : (
+                        <div style={{ fontSize: 18, color: '#1A1A1A', fontWeight: 700 }}>
+                          {formatBRL(precoFinal)}
+                        </div>
+                      )}
+                      <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
+                        ou 3x de {formatBRL(precoFinal / 3)} sem juros
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        )}
+      </section>
+
+      <footer style={{ background: '#1A1A1A', color: 'white', padding: '48px 24px', marginTop: 80 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 24, fontWeight: 700, marginBottom: 8, letterSpacing: -0.3 }}>
+            {nomeLoja}
+          </div>
+          <div style={{ fontSize: 12, color: '#999', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 24 }}>
+            Joias 925
+          </div>
+
+          <div style={{ display: 'inline-block', padding: '20px 32px', border: '1px solid #333', borderRadius: 16, marginBottom: 32 }}>
+            <div style={{ fontSize: 11, color: '#999', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 4 }}>
+              Selo de qualidade
+            </div>
+            <div style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 32, fontWeight: 700, color: 'white', letterSpacing: 2 }}>
+              925
+            </div>
+            <div style={{ fontSize: 10, color: '#777', marginTop: 4 }}>
+              Prata legítima certificada
+            </div>
+          </div>
+
+          <div style={{ fontSize: 13, color: '#999', lineHeight: 1.8, marginBottom: 16 }}>
+            Atendimento personalizado via WhatsApp<br/>
+            Envio para todo o Brasil
+          </div>
+
+          
+            href={`https://wa.me/55${whatsappLimpo}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 24, background: 'white', color: '#1A1A1A', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+          >
+            Falar com {revendedora.nome.split(' ')[0]}
+          </a>
+
+          <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid #333', fontSize: 11, color: '#666' }}>
+            © Prata de 15 Reais · {new Date().getFullYear()}
+          </div>
         </div>
       </footer>
     </div>
