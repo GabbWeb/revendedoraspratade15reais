@@ -109,6 +109,7 @@ export default function LojaPage({ params }: { params: { slug: string } }) {
 
   const nomeLoja = revendedora.nome_loja || `Loja da ${revendedora.nome.split(' ')[0]}`
   const whatsappLimpo = revendedora.whatsapp.replace(/\D/g, '')
+  const linkWhatsApp = `https://wa.me/55${whatsappLimpo}`
 
   return (
     <div style={{ minHeight: '100vh', background: '#FAFAFA', fontFamily: '-apple-system, "Inter", sans-serif' }}>
@@ -134,19 +135,9 @@ export default function LojaPage({ params }: { params: { slug: string } }) {
             </div>
           </div>
 
-          
-            href={`https://wa.me/55${whatsappLimpo}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '10px 18px', borderRadius: 24,
-              background: '#1A1A1A', color: 'white',
-              fontSize: 13, fontWeight: 600, textDecoration: 'none',
-            }}
-          >
+          <Link href={linkWhatsApp} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 24, background: '#1A1A1A', color: 'white', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
             Atendimento
-          </a>
+          </Link>
         </div>
       </header>
 
@@ -170,14 +161,7 @@ export default function LojaPage({ params }: { params: { slug: string } }) {
             placeholder="Buscar joia..."
             value={busca}
             onChange={e => setBusca(e.target.value)}
-            style={{
-              width: '100%', padding: '14px 18px',
-              border: '1px solid #EEE', borderRadius: 12,
-              fontSize: 14, background: 'white',
-              outline: 'none',
-              fontFamily: 'inherit',
-              boxSizing: 'border-box',
-            }}
+            style={{ width: '100%', padding: '14px 18px', border: '1px solid #EEE', borderRadius: 12, fontSize: 14, background: 'white', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
           />
         </div>
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8 }}>
@@ -185,16 +169,7 @@ export default function LojaPage({ params }: { params: { slug: string } }) {
             <button
               key={cat}
               onClick={() => setCategoriaAtiva(cat)}
-              style={{
-                padding: '8px 18px', borderRadius: 24,
-                border: '1px solid',
-                borderColor: categoriaAtiva === cat ? '#1A1A1A' : '#EEE',
-                background: categoriaAtiva === cat ? '#1A1A1A' : 'white',
-                color: categoriaAtiva === cat ? 'white' : '#555',
-                fontSize: 13, fontWeight: 500,
-                whiteSpace: 'nowrap', cursor: 'pointer',
-                fontFamily: 'inherit',
-              }}
+              style={{ padding: '8px 18px', borderRadius: 24, border: '1px solid', borderColor: categoriaAtiva === cat ? '#1A1A1A' : '#EEE', background: categoriaAtiva === cat ? '#1A1A1A' : 'white', color: categoriaAtiva === cat ? 'white' : '#555', fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', cursor: 'pointer', fontFamily: 'inherit' }}
             >
               {cat}
             </button>
@@ -295,14 +270,9 @@ export default function LojaPage({ params }: { params: { slug: string } }) {
             Envio para todo o Brasil
           </div>
 
-          
-            href={`https://wa.me/55${whatsappLimpo}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 24, background: 'white', color: '#1A1A1A', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
-          >
+          <Link href={linkWhatsApp} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 24, background: 'white', color: '#1A1A1A', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
             Falar com {revendedora.nome.split(' ')[0]}
-          </a>
+          </Link>
 
           <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid #333', fontSize: 11, color: '#666' }}>
             © Prata de 15 Reais · {new Date().getFullYear()}
