@@ -54,4 +54,111 @@ export default function CarrinhoPage() {
                     {item.foto ? (
                       <img src={item.foto} alt={item.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
                     ) : (
-                      <div style={{ width: '100%',
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>💎</div>
+                    )}
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 14, fontWeight: 600, color: '#1A1A1A', lineHeight: 1.3, marginBottom: 4 }}>
+                      {item.nome}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#999', marginBottom: 10 }}>
+                      SKU: {item.sku}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #EEE', borderRadius: 8, background: '#FAFAFA' }}>
+                        <button
+                          onClick={() => alterarQuantidade(item.id, item.quantidade - 1)}
+                          style={{ width: 32, height: 32, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 16, color: '#555' }}
+                          aria-label="Diminuir quantidade"
+                        >
+                          −
+                        </button>
+                        <div style={{ minWidth: 24, textAlign: 'center', fontSize: 14, fontWeight: 600, color: '#1A1A1A' }}>
+                          {item.quantidade}
+                        </div>
+                        <button
+                          onClick={() => alterarQuantidade(item.id, item.quantidade + 1)}
+                          style={{ width: 32, height: 32, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 16, color: '#555' }}
+                          aria-label="Aumentar quantidade"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      <div style={{ fontSize: 16, fontWeight: 700, color: '#1A1A1A' }}>
+                        {formatBRL(item.preco * item.quantidade)}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => remover(item.id)}
+                      style={{ marginTop: 8, padding: 0, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 12, color: '#DC2626', textDecoration: 'underline' }}
+                    >
+                      Remover
+                    </button>
+                  </div>
+
+                </div>
+              ))}
+
+              <button
+                onClick={() => {
+                  if (confirm('Tem certeza que deseja limpar o carrinho?')) limpar()
+                }}
+                style={{ marginTop: 8, padding: '10px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 12, color: '#999', textDecoration: 'underline', textAlign: 'center' }}
+              >
+                Limpar carrinho
+              </button>
+            </div>
+
+            <div style={{ position: 'sticky', top: 24, background: 'white', borderRadius: 16, padding: 24, border: '1px solid #EEE' }}>
+              <div style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 20, fontWeight: 700, color: '#1A1A1A', marginBottom: 16 }}>
+                Resumo
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#555', marginBottom: 8 }}>
+                <span>Subtotal ({totalItens} {totalItens === 1 ? 'item' : 'itens'})</span>
+                <span>{formatBRL(subtotal)}</span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#555', marginBottom: 16 }}>
+                <span>Frete</span>
+                <span style={{ color: '#999' }}>Calculado no checkout</span>
+              </div>
+
+              <div style={{ borderTop: '1px solid #EEE', paddingTop: 16, marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#1A1A1A' }}>Total</span>
+                <span style={{ fontSize: 24, fontWeight: 700, color: '#1A1A1A' }}>{formatBRL(subtotal)}</span>
+              </div>
+
+              <div style={{ fontSize: 12, color: '#777', marginBottom: 16, textAlign: 'center' }}>
+                ou 3x de {formatBRL(subtotal / 3)} sem juros
+              </div>
+
+              <button
+                disabled
+                style={{
+                  display: 'block', width: '100%', textAlign: 'center',
+                  padding: '16px 20px', borderRadius: 12,
+                  background: '#1A1A1A', color: 'white',
+                  fontSize: 15, fontWeight: 600, textDecoration: 'none',
+                  border: 'none', cursor: 'not-allowed', opacity: 0.6,
+                  boxSizing: 'border-box',
+                }}
+              >
+                Finalizar compra (em breve)
+              </button>
+
+              <div style={{ marginTop: 16, padding: 12, background: '#FFF8E1', borderRadius: 8, fontSize: 11, color: '#866', lineHeight: 1.5, textAlign: 'center' }}>
+                💎 Checkout com PagBank será habilitado em breve. Por enquanto, finalize sua compra via WhatsApp pela loja da revendedora.
+              </div>
+            </div>
+
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
