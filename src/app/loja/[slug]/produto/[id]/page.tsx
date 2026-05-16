@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useCarrinho } from '@/contexts/CarrinhoContext'
 
 type Produto = {
   id: string
@@ -29,6 +30,7 @@ type Revendedora = {
 }
 
 export default function ProdutoPage({ params }: { params: { slug: string; id: string } }) {
+  const { adicionar } = useCarrinho()
   const [revendedora, setRevendedora] = useState<Revendedora | null>(null)
   const [produto, setProduto] = useState<Produto | null>(null)
   const [loading, setLoading] = useState(true)
@@ -38,7 +40,6 @@ export default function ProdutoPage({ params }: { params: { slug: string; id: st
   useEffect(() => {
     async function carregarTudo() {
       try {
-        // Carrega revendedora e produto em paralelo
         const [resRev, resProd] = await Promise.all([
           fetch(`/api/loja/${params.slug}`),
           fetch(`/api/produtos/${params.id}`),
@@ -69,6 +70,21 @@ export default function ProdutoPage({ params }: { params: { slug: string; id: st
 
   function formatBRL(val: number) {
     return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  }
+
+  function handleAdicionarCarrinho() {
+    if (!produto) return
+    const precoFinal = produto.preco_promo && produto.preco_promo > 0 && produto.preco_promo < produto.preco
+      ? produto.preco_promo
+      : produto.preco
+    adicionar({
+      id: produto.id,
+      sku: produto.sku,
+      nome: produto.nome,
+      preco: precoFinal,
+      foto: (produto.fotos && produto.fotos.length > 0) ? produto.fotos[0] : '',
+      slugRevendedora: params.slug,
+    })
   }
 
   if (loading) {
@@ -129,7 +145,6 @@ export default function ProdutoPage({ params }: { params: { slug: string; id: st
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 48, alignItems: 'start' }}>
 
-          {/* GALERIA DE FOTOS */}
           <div style={{ position: 'sticky', top: 100 }}>
             <div style={{ aspectRatio: '1', background: '#F5F5F5', borderRadius: 16, overflow: 'hidden', border: '1px solid #EEE', position: 'relative' }}>
               {fotoPrincipal ? (
@@ -150,7 +165,6 @@ export default function ProdutoPage({ params }: { params: { slug: string; id: st
               )}
             </div>
 
-            {/* THUMBNAILS - só mostra se tem mais de 1 foto */}
             {fotos.length > 1 && (
               <div style={{ display: 'flex', gap: 8, marginTop: 12, overflowX: 'auto', paddingBottom: 4 }}>
                 {fotos.map((foto, i) => (
@@ -181,7 +195,6 @@ export default function ProdutoPage({ params }: { params: { slug: string; id: st
             )}
           </div>
 
-          {/* INFO PRODUTO */}
           <div>
             <div style={{ fontSize: 11, color: '#999', letterSpacing: 2, textTransform: 'uppercase', fontWeight: 600, marginBottom: 12 }}>
               {produto.categoria || 'Joia 925'}
@@ -191,7 +204,6 @@ export default function ProdutoPage({ params }: { params: { slug: string; id: st
               {produto.nome}
             </h1>
 
-            {/* PREÇO */}
             <div style={{ marginBottom: 8 }}>
               {temDesconto ? (
                 <>
@@ -214,44 +226,22 @@ export default function ProdutoPage({ params }: { params: { slug: string; id: st
               ou 3x de {formatBRL(precoFinal / 3)} sem juros
             </div>
 
-            {/* ATRIBUTOS - tamanho e cor como info, só se existem */}
             {(produto.tamanho || produto.cor || produto.sku) && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
                 {produto.tamanho && (
-                  <div style={{
-                    padding: '8px 14px',
-                    background: 'white',
-                    border: '1px solid #EEE',
-                    borderRadius: 10,
-                    fontSize: 13,
-                    color: '#1A1A1A',
-                  }}>
+                  <div style={{ padding: '8px 14px', background: 'white', border: '1px solid #EEE', borderRadius: 10, fontSize: 13, color: '#1A1A1A' }}>
                     <span style={{ color: '#999', fontWeight: 500 }}>Tamanho: </span>
                     <span style={{ fontWeight: 600 }}>{produto.tamanho}</span>
                   </div>
                 )}
                 {produto.cor && (
-                  <div style={{
-                    padding: '8px 14px',
-                    background: 'white',
-                    border: '1px solid #EEE',
-                    borderRadius: 10,
-                    fontSize: 13,
-                    color: '#1A1A1A',
-                  }}>
+                  <div style={{ padding: '8px 14px', background: 'white', border: '1px solid #EEE', borderRadius: 10, fontSize: 13, color: '#1A1A1A' }}>
                     <span style={{ color: '#999', fontWeight: 500 }}>Cor: </span>
                     <span style={{ fontWeight: 600 }}>{produto.cor}</span>
                   </div>
                 )}
                 {produto.sku && (
-                  <div style={{
-                    padding: '8px 14px',
-                    background: 'white',
-                    border: '1px solid #EEE',
-                    borderRadius: 10,
-                    fontSize: 13,
-                    color: '#999',
-                  }}>
+                  <div style={{ padding: '8px 14px', background: 'white', border: '1px solid #EEE', borderRadius: 10, fontSize: 13, color: '#999' }}>
                     <span style={{ fontWeight: 500 }}>SKU: </span>
                     <span style={{ fontWeight: 600, color: '#555' }}>{produto.sku}</span>
                   </div>
@@ -259,7 +249,6 @@ export default function ProdutoPage({ params }: { params: { slug: string; id: st
               </div>
             )}
 
-            {/* DESCRIÇÃO */}
             {produto.descricao && (
               <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #EEE', marginBottom: 24 }}>
                 <div style={{ fontSize: 11, color: '#999', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, marginBottom: 12 }}>
@@ -271,36 +260,49 @@ export default function ProdutoPage({ params }: { params: { slug: string; id: st
               </div>
             )}
 
-            {/* ESTOQUE */}
             {produto.estoque > 0 && produto.estoque <= 5 && (
               <div style={{ fontSize: 12, color: '#DC2626', marginBottom: 16, fontWeight: 600 }}>
                 Restam apenas {produto.estoque} {produto.estoque === 1 ? 'unidade' : 'unidades'}!
               </div>
             )}
 
-            {/* CTA WHATSAPP */}
-            <a
+            <button
+              onClick={handleAdicionarCarrinho}
+              style={{
+                display: 'block', width: '100%', textAlign: 'center',
+                padding: '16px 20px', borderRadius: 12,
+                background: '#1A1A1A', color: 'white',
+                fontSize: 15, fontWeight: 600,
+                border: 'none', cursor: 'pointer',
+                marginBottom: 12,
+                boxSizing: 'border-box',
+                fontFamily: 'inherit',
+              }}
+            >
+              🛒  Adicionar ao Carrinho
+            </button>
+
+            <Link
               href={linkWhatsApp}
               target="_blank"
               rel="noopener noreferrer"
               style={{
                 display: 'block', width: '100%', textAlign: 'center',
-                padding: '16px 20px', borderRadius: 12,
-                background: '#1A1A1A', color: 'white',
-                fontSize: 15, fontWeight: 600, textDecoration: 'none',
+                padding: '14px 20px', borderRadius: 12,
+                background: 'white', color: '#1A1A1A',
+                border: '1px solid #1A1A1A',
+                fontSize: 14, fontWeight: 600, textDecoration: 'none',
                 marginBottom: 12,
                 boxSizing: 'border-box',
               }}
             >
-              Comprar via WhatsApp
-            </a>
+              Falar com {revendedora.nome.split(' ')[0]} no WhatsApp
+            </Link>
 
             <div style={{ fontSize: 12, color: '#999', textAlign: 'center', lineHeight: 1.6 }}>
-              Atendimento personalizado<br/>
-              {revendedora.nome.split(' ')[0]} responde em até 30 minutos
+              Atendimento personalizado · Resposta em até 30 minutos
             </div>
 
-            {/* SELOS */}
             <div style={{ marginTop: 32, paddingTop: 32, borderTop: '1px solid #EEE' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
